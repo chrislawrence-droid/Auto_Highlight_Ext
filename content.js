@@ -128,6 +128,10 @@ class MultiHighlightFinder {
       this.loadSettingsAndInit();
       console.log('✅ Settings loading initiated');
       
+      // Set up periodic highlight check to restore highlights if they disappear
+      this.setupHighlightCheck();
+      console.log('✅ Highlight check initiated');
+      
       console.log('✅ MultiHighlightFinder initialization complete');
     } catch (error) {
       console.error('❌ Error during initialization:', error);
@@ -184,6 +188,7 @@ class MultiHighlightFinder {
       // Check for major page changes that might require reinitialization
       let hasMajorChanges = false;
       let hasSignificantChanges = false;
+      let hasHighlightRemovals = false;
       
       for (const mutation of mutations) {
         // Look for major structural changes (like new main content areas)
@@ -215,6 +220,20 @@ class MultiHighlightFinder {
           }
         }
         
+        // Look for removed nodes that might contain our highlights
+        if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
+          for (const node of mutation.removedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if this node contains our highlights
+              const highlights = node.querySelectorAll('.multi-highlight-term');
+              if (highlights.length > 0) {
+                console.log('❌ Highlights were removed!', highlights.length, 'highlights lost');
+                hasHighlightRemovals = true;
+              }
+            }
+          }
+        }
+        
         // Look for text content changes
         if (mutation.type === 'characterData' && mutation.target.textContent.trim().length > 0) {
           hasSignificantChanges = true;
@@ -232,18 +251,39 @@ class MultiHighlightFinder {
         return;
       }
       
-      // Handle regular content changes (only re-highlight if auto-highlight mode is enabled and we have terms)
-      if (this.autoHighlightMode && this.defaultTerms.length > 0 && hasSignificantChanges) {
-        // Clear existing highlights first
-        this.clearHighlights();
-        
-        // Wait a bit for the DOM to settle, then re-highlight
+      // Handle highlight removals - restore highlights immediately
+      if (hasHighlightRemovals && this.autoHighlightMode && this.defaultTerms.length > 0) {
+        console.log('Highlights were removed, restoring them...');
         setTimeout(() => {
           if (this.autoHighlightMode && this.defaultTerms.length > 0) {
-            console.log('Content changed, re-highlighting terms:', this.defaultTerms);
+            console.log('Restoring highlights for terms:', this.defaultTerms);
             this.performSearch(this.defaultTerms.join('\n'));
           }
-        }, 300); // Wait 300ms for DOM to settle
+        }, 100);
+        return;
+      }
+      
+      // Handle regular content changes (only re-highlight if auto-highlight mode is enabled and we have terms)
+      if (this.autoHighlightMode && this.defaultTerms.length > 0 && hasSignificantChanges) {
+        console.log('Content changed, checking if highlights need restoration...');
+        
+        // Check if we still have highlights
+        const currentHighlights = document.querySelectorAll('.multi-highlight-term');
+        if (currentHighlights.length === 0) {
+          console.log('No highlights found, restoring them...');
+          // Clear existing highlights first
+          this.clearHighlights();
+          
+          // Wait a bit for the DOM to settle, then re-highlight
+          setTimeout(() => {
+            if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+              console.log('Content changed, re-highlighting terms:', this.defaultTerms);
+              this.performSearch(this.defaultTerms.join('\n'));
+            }
+          }, 300); // Wait 300ms for DOM to settle
+        } else {
+          console.log('Highlights still exist, not re-highlighting');
+        }
       }
     });
     
@@ -284,9 +324,28 @@ class MultiHighlightFinder {
         childList: true,
         subtree: false
       });
-      console.log('Overlay removal observer set up');
-    }
+          console.log('Overlay removal observer set up');
   }
+
+  setupHighlightCheck() {
+    // Set up periodic check to restore highlights if they disappear
+    this.highlightCheckInterval = setInterval(() => {
+      if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+        // Check if we have any highlights
+        const currentHighlights = document.querySelectorAll('.multi-highlight-term');
+        
+        if (currentHighlights.length === 0) {
+          console.log('🔍 Periodic check: No highlights found, restoring them...');
+          this.performSearch(this.defaultTerms.join('\n'));
+        } else {
+          console.log('🔍 Periodic check: Found', currentHighlights.length, 'highlights, all good');
+        }
+      }
+    }, 2000); // Check every 2 seconds
+    
+    console.log('Periodic highlight check set up (every 2 seconds)');
+  }
+}
 
   isSecureContext() {
     console.log('=== Security check running ===');
@@ -1010,6 +1069,16 @@ class MultiHighlightFinder {
     if (this.contentObserver) {
       this.contentObserver.disconnect();
       console.log('Content observer disconnected');
+    }
+    
+    if (this.overlayObserver) {
+      this.overlayObserver.disconnect();
+      console.log('Overlay observer disconnected');
+    }
+    
+    if (this.highlightCheckInterval) {
+      clearInterval(this.highlightCheckInterval);
+      console.log('Highlight check interval cleared');
     }
     
     // Remove event listeners

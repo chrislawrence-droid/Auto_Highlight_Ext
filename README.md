@@ -10,6 +10,7 @@ A Chrome extension that extends Command+F functionality to highlight multiple te
 - **Privacy-focused**: No external API calls, everything runs locally
 - **Auto-highlight mode**: NEW! Automatically highlight text without manual clicks
 - **Default terms**: Set common terms to highlight automatically on every page
+- **SPA support**: Automatically re-highlights text when page content changes dynamically
 
 ## Installation
 
@@ -46,6 +47,12 @@ A Chrome extension that extends Command+F functionality to highlight multiple te
 - One term per line
 - Terms are saved and will be used on every page when auto-highlight is enabled
 - You can change these terms anytime by reopening the interface
+
+### SPA (Single Page Application) Support
+- **Automatic re-highlighting**: When using apps like LabelStudio, React, Vue, etc., the extension automatically detects content changes and re-highlights your terms
+- **No manual intervention**: Your terms stay highlighted even when navigating between different views or clicking "next"
+- **Smart detection**: Uses advanced DOM observation to detect when new content is loaded
+- **Manual re-highlight**: If needed, use the "Re-Highlight" button to manually refresh highlights
 
 ### Keyboard Shortcuts
 - **Esc**: Close the highlighting interface

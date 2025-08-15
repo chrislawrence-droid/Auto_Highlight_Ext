@@ -24,11 +24,17 @@ class MultiHighlightFinder {
     // Listen for Escape key to close overlay
     document.addEventListener('keydown', this.handleKeydown.bind(this));
     
+    // Listen for page visibility changes (for SPA navigation)
+    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+    
     // Create overlay elements (but don't show them)
     this.createOverlay();
     
     // Listen for messages from popup/background
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    
+    // Set up content observer for dynamic page changes (SPA support)
+    this.setupContentObserver();
     
     // Auto-highlight if enabled and terms exist
     if (this.autoHighlightMode && this.defaultTerms.length > 0) {
@@ -57,6 +63,69 @@ class MultiHighlightFinder {
         defaultTerms: this.defaultTerms
       });
     }
+  }
+
+  setupContentObserver() {
+    // Create a MutationObserver to watch for dynamic content changes
+    this.contentObserver = new MutationObserver((mutations) => {
+      // Only re-highlight if auto-highlight mode is enabled and we have terms
+      if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+        // Check if there are significant content changes
+        let hasSignificantChanges = false;
+        
+        for (const mutation of mutations) {
+          // Look for added nodes with text content
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if this element contains text nodes
+                const textWalker = document.createTreeWalker(
+                  node,
+                  NodeFilter.SHOW_TEXT,
+                  null,
+                  false
+                );
+                
+                if (textWalker.nextNode()) {
+                  hasSignificantChanges = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          // Look for text content changes
+          if (mutation.type === 'characterData' && mutation.target.textContent.trim().length > 0) {
+            hasSignificantChanges = true;
+          }
+          
+          if (hasSignificantChanges) break;
+        }
+        
+        // If we have significant changes, re-highlight after a short delay
+        if (hasSignificantChanges) {
+          // Clear existing highlights first
+          this.clearHighlights();
+          
+          // Wait a bit for the DOM to settle, then re-highlight
+          setTimeout(() => {
+            if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+              console.log('Content changed, re-highlighting terms:', this.defaultTerms);
+              this.performSearch(this.defaultTerms.join('\n'));
+            }
+          }, 300); // Wait 300ms for DOM to settle
+        }
+      }
+    });
+    
+    // Start observing the document body for changes
+    this.contentObserver.observe(document.body, {
+      childList: true,      // Watch for added/removed nodes
+      subtree: true,        // Watch the entire DOM tree
+      characterData: true   // Watch for text content changes
+    });
+    
+    console.log('Content observer set up for dynamic page changes');
   }
 
   isSecureContext() {
@@ -260,6 +329,25 @@ class MultiHighlightFinder {
     `;
     clearBtn.onclick = () => this.clearHighlights();
 
+    // Create re-highlight button for SPA support
+    const reHighlightBtn = document.createElement('button');
+    reHighlightBtn.textContent = 'Re-Highlight';
+    reHighlightBtn.style.cssText = `
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    `;
+    reHighlightBtn.onclick = () => {
+      if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+        this.clearHighlights();
+        this.performSearch(this.defaultTerms.join('\n'));
+      }
+    };
+
     // Create close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
@@ -281,6 +369,7 @@ class MultiHighlightFinder {
     // Assemble the overlay
     buttonContainer.appendChild(searchBtn);
     buttonContainer.appendChild(clearBtn);
+    buttonContainer.appendChild(reHighlightBtn);
     this.inputContainer.appendChild(closeBtn);
     this.inputContainer.appendChild(autoHighlightContainer);
     this.inputContainer.appendChild(defaultTermsContainer);
@@ -300,6 +389,20 @@ class MultiHighlightFinder {
     // Only handle Escape key to close overlay
     if (event.key === 'Escape' && this.isActive) {
       this.hideOverlay();
+    }
+  }
+
+  handleVisibilityChange() {
+    // When page becomes visible again (user navigated back), re-highlight if needed
+    if (!document.hidden && this.autoHighlightMode && this.defaultTerms.length > 0) {
+      // Wait a bit for the page to fully render
+      setTimeout(() => {
+        if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+          console.log('Page became visible, re-highlighting terms');
+          this.clearHighlights();
+          this.performSearch(this.defaultTerms.join('\n'));
+        }
+      }, 500);
     }
   }
 
@@ -336,6 +439,13 @@ class MultiHighlightFinder {
       console.log('Setting default terms...');
       this.defaultTerms = message.terms;
       this.saveSettings();
+      sendResponse({ success: true });
+    } else if (message.action === 'reHighlight') {
+      console.log('Re-highlighting terms...');
+      if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+        this.clearHighlights();
+        this.performSearch(this.defaultTerms.join('\n'));
+      }
       sendResponse({ success: true });
     }
     
@@ -636,6 +746,14 @@ class MultiHighlightFinder {
     const summary = document.getElementById('multi-highlight-summary');
     if (summary) {
       summary.remove();
+    }
+  }
+
+  // Cleanup method to disconnect observer
+  cleanup() {
+    if (this.contentObserver) {
+      this.contentObserver.disconnect();
+      console.log('Content observer disconnected');
     }
   }
 }

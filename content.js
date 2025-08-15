@@ -254,6 +254,37 @@ class MultiHighlightFinder {
     });
     
     console.log('Content observer set up for dynamic page changes');
+    
+    // Also watch for our overlay being removed
+    this.overlayObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          for (const node of mutation.removedNodes) {
+            if (node === this.overlay || node === this.inputContainer) {
+              console.log('❌ Overlay was removed from DOM!');
+              console.log('Removed node:', node);
+              console.log('Current isActive:', this.isActive);
+              
+              // Recreate overlay if it was removed
+              if (this.isActive) {
+                console.log('Recreating overlay...');
+                this.createOverlay();
+                this.showOverlay();
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Watch for changes to the body
+    if (document.body) {
+      this.overlayObserver.observe(document.body, {
+        childList: true,
+        subtree: false
+      });
+      console.log('Overlay removal observer set up');
+    }
   }
 
   isSecureContext() {
@@ -524,8 +555,11 @@ class MultiHighlightFinder {
   }
 
   handleKeydown(event) {
+    console.log('Keydown event:', event.key, 'isActive:', this.isActive);
+    
     // Only handle Escape key to close overlay
     if (event.key === 'Escape' && this.isActive) {
+      console.log('Escape key pressed, hiding overlay');
       this.hideOverlay();
     }
   }
@@ -606,19 +640,31 @@ class MultiHighlightFinder {
     console.log('Overlay element:', this.overlay);
     console.log('Input container:', this.inputContainer);
     
+    // Make sure elements exist
+    if (!this.overlay || !this.inputContainer) {
+      console.log('❌ Overlay elements not found, recreating...');
+      this.createOverlay();
+    }
+    
+    // Force display and visibility
     this.overlay.style.display = 'block';
+    this.overlay.style.visibility = 'visible';
+    this.overlay.style.opacity = '1';
+    
     this.inputContainer.style.display = 'block';
+    this.inputContainer.style.visibility = 'visible';
+    this.inputContainer.style.opacity = '1';
+    this.inputContainer.style.transform = 'translateY(0)';
     
-    // Trigger smooth animation
-    setTimeout(() => {
-      this.overlay.style.opacity = '1';
-      this.inputContainer.style.opacity = '1';
-      this.inputContainer.style.transform = 'translateY(0)';
-      console.log('Animation triggered');
-    }, 10);
+    // Ensure high z-index
+    this.overlay.style.zIndex = '10000';
+    this.inputContainer.style.zIndex = '10001';
     
+    console.log('Overlay styles set, isActive will be set to true');
+    
+    // Set active state
     this.isActive = true;
-    console.log('Overlay is now active');
+    console.log('Overlay is now active, isActive:', this.isActive);
     
     // Sync UI with current settings
     const autoHighlightToggle = document.getElementById('auto-highlight-toggle');
@@ -638,9 +684,25 @@ class MultiHighlightFinder {
     } else {
       console.log('Input element not found!');
     }
+    
+    // Log final state
+    console.log('Final overlay state:');
+    console.log('- Overlay display:', this.overlay.style.display);
+    console.log('- Overlay opacity:', this.overlay.style.opacity);
+    console.log('- Input container display:', this.inputContainer.style.display);
+    console.log('- Input container opacity:', this.inputContainer.style.opacity);
+    console.log('- isActive:', this.isActive);
   }
 
   hideOverlay() {
+    console.log('hideOverlay called, current isActive:', this.isActive);
+    
+    // Only hide if we're actually active
+    if (!this.isActive) {
+      console.log('Overlay not active, ignoring hide request');
+      return;
+    }
+    
     // Smooth fade out
     this.overlay.style.opacity = '0';
     this.inputContainer.style.opacity = '0';
@@ -651,6 +713,7 @@ class MultiHighlightFinder {
       this.overlay.style.display = 'none';
       this.inputContainer.style.display = 'none';
       this.isActive = false;
+      console.log('Overlay hidden, isActive set to false');
     }, 200);
   }
 
@@ -1068,53 +1131,19 @@ if (window.multiHighlightFinder) {
 // Add global test functions immediately
 console.log('=== Adding global test functions ===');
 
-window.testExtension = function() {
-  console.log('=== Global test function called ===');
-  if (window.multiHighlightFinder) {
-    console.log('✅ Extension found, running simple test...');
-    window.multiHighlightFinder.simpleTest();
-  } else {
-    console.log('❌ Extension not found');
-    console.log('Available global objects:', Object.keys(window));
-  }
-};
-
-window.forceHighlight = function(term) {
-  console.log('=== Force highlight called with term:', term, '===');
-  if (window.multiHighlightFinder) {
-    console.log('✅ Extension found, forcing highlight...');
-    window.multiHighlightFinder.performSearch(term);
-  } else {
-    console.log('❌ Extension not found');
-  }
-};
-
-// Add a simple test that should always work
+// Define functions directly on window object
 window.basicTest = function() {
-  console.log('=== Basic test function ===');
-  console.log('Script is running!');
-  console.log('Window object:', window);
-  console.log('Document:', document);
-  console.log('Extension object:', window.multiHighlightFinder);
-  
-  // Try to create a simple highlight
-  if (document.body) {
-    const testSpan = document.createElement('span');
-    testSpan.textContent = 'TEST HIGHLIGHT';
-    testSpan.style.cssText = 'background: yellow; padding: 2px;';
-    document.body.appendChild(testSpan);
-    console.log('✅ Basic highlight test completed');
-  } else {
-    console.log('❌ Document body not available yet');
-  }
+  console.log('=== Basic test function called ===');
+  alert('Basic test function is working!');
+  console.log('✅ Basic test completed');
 };
 
-// Add a simple highlight function that works immediately
 window.quickHighlight = function(term) {
   console.log('=== Quick highlight called with term:', term, '===');
   
   if (!document.body) {
     console.log('❌ Document body not available');
+    alert('Document body not available yet');
     return;
   }
   
@@ -1146,11 +1175,51 @@ window.quickHighlight = function(term) {
   
   if (!found) {
     console.log('No text containing term found');
+    alert('No text containing "' + term + '" found');
+  } else {
+    alert('Highlighted text containing "' + term + '"');
   }
 };
 
+window.testExtension = function() {
+  console.log('=== Test extension function called ===');
+  if (window.multiHighlightFinder) {
+    console.log('✅ Extension found, running simple test...');
+    window.multiHighlightFinder.simpleTest();
+  } else {
+    console.log('❌ Extension not found');
+    console.log('Available global objects:', Object.keys(window));
+  }
+};
+
+window.forceHighlight = function(term) {
+  console.log('=== Force highlight called with term:', term, '===');
+  if (window.multiHighlightFinder) {
+    console.log('✅ Extension found, forcing highlight...');
+    window.multiHighlightFinder.performSearch(term);
+  } else {
+    console.log('❌ Extension not found');
+  }
+};
+
+// Verify functions are actually available
 console.log('✅ Global test functions added to window object');
-console.log('Available functions:', Object.keys(window).filter(key => key.includes('Test') || key.includes('Highlight')));
+console.log('Available functions:', Object.keys(window).filter(key => 
+  key.includes('Test') || key.includes('Highlight') || key.includes('test') || key.includes('highlight')
+));
+
+// Test if functions are actually available
+if (typeof window.basicTest === 'function') {
+  console.log('✅ basicTest function is available');
+} else {
+  console.log('❌ basicTest function is NOT available');
+}
+
+if (typeof window.quickHighlight === 'function') {
+  console.log('✅ quickHighlight function is available');
+} else {
+  console.log('❌ quickHighlight function is NOT available');
+}
 
 console.log('=== Extension script fully loaded ===');
 console.log('Test functions available:');

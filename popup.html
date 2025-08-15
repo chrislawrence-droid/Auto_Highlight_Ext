@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Multi-Highlight Finder</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 280px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      overflow: hidden;
+    }
+    
+    .container {
+      padding: 16px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.8;
+      font-weight: 300;
+    }
+    
+    .shortcut-badge {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 12px 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .shortcut-text {
+      font-size: 13px;
+      opacity: 0.9;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    
+    .features {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .features h3 {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    
+    .feature-item {
+      font-size: 10px;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      line-height: 1.3;
+    }
+    
+    .feature-item:before {
+      content: "•";
+      color: #4ade80;
+      font-weight: bold;
+      margin-right: 6px;
+      font-size: 14px;
+    }
+    
+    .footer {
+      text-align: center;
+      font-size: 10px;
+      opacity: 0.7;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .highlight-demo {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin: 12px 0;
+    }
+    
+    .demo-highlight {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .demo-highlight:nth-child(1) { background: #ffeb3b; }
+    .demo-highlight:nth-child(2) { background: #ff9800; }
+    .demo-highlight:nth-child(3) { background: #e91e63; }
+    .demo-highlight:nth-child(4) { background: #9c27b0; }
+    
+    /* Hover effects */
+    .auto-highlight-info {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+    }
+    
+    .info-text {
+      display: block;
+      font-size: 12px;
+      opacity: 0.9;
+      font-weight: 400;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    
+    .info-text:last-child {
+      margin-bottom: 0;
+    }
+    
+    .shortcut-badge:hover,
+    .features:hover,
+    .auto-highlight-info:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      transition: all 0.2s ease;
+    }
+    
+    /* Smooth animations */
+    .container > * {
+      animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .container > *:nth-child(2) { animation-delay: 0.1s; }
+    .container > *:nth-child(3) { animation-delay: 0.2s; }
+    .container > *:nth-child(4) { animation-delay: 0.3s; }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Multi-Highlight Finder</h1>
+      <p>Highlight multiple terms simultaneously</p>
+    </div>
+    
+    <div class="shortcut-badge">
+      <span class="shortcut-text">Click the extension icon</span>
+      <span class="shortcut-text">to start highlighting</span>
+    </div>
+    
+    <div class="auto-highlight-info">
+      <span class="info-text">✨ Auto-highlight mode available</span>
+      <span class="info-text">Set default terms for instant highlighting</span>
+    </div>
+    
+    <div class="highlight-demo">
+      <div class="demo-highlight"></div>
+      <div class="demo-highlight"></div>
+      <div class="demo-highlight"></div>
+      <div class="demo-highlight"></div>
+    </div>
+    
+    <div class="features">
+      <h3>Features</h3>
+      <div class="feature-grid">
+        <div class="feature-item">Multi-term search</div>
+        <div class="feature-item">Unique colors</div>
+        <div class="feature-item">Case-insensitive</div>
+        <div class="feature-item">Privacy-focused</div>
+        <div class="feature-item">Easy to use</div>
+        <div class="feature-item">No external calls</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Click the extension icon • Press Esc to close</p>
+      <p style="margin-top: 8px; font-size: 9px;">
+        <a href="demo.html" target="_blank" style="color: rgba(255,255,255,0.7); text-decoration: none;">📖 View Demo Page</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

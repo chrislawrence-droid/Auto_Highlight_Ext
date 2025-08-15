@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Highlight Demo Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007acc;
+        }
+        .highlight-example {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Auto-Highlight Extension Demo</h1>
+    
+    <div class="demo-section">
+        <h2>How to Test Auto-Highlight</h2>
+        <ol>
+            <li>Install the extension in Edge/Chrome</li>
+            <li>Click the extension icon</li>
+            <li>Enable "Auto-Highlight Mode"</li>
+            <li>Add some default terms like "highlight", "extension", "demo"</li>
+            <li>Close the interface and refresh this page</li>
+            <li>Your terms should be automatically highlighted!</li>
+        </ol>
+    </div>
+
+    <h2>Sample Text for Testing</h2>
+    
+    <p>This is a demonstration page for the auto-highlight extension. The extension can automatically highlight important terms like <strong>highlight</strong>, <strong>extension</strong>, and <strong>demo</strong> without requiring manual clicks each time.</p>
+    
+    <p>When you enable auto-highlight mode and set default terms, the extension will automatically scan every page you visit and highlight those terms with unique colors. This is especially useful for:</p>
+    
+    <ul>
+        <li>Medical professionals reviewing patient records</li>
+        <li>Researchers analyzing documents</li>
+        <li>Students studying specific topics</li>
+        <li>Anyone who frequently searches for the same terms</li>
+    </ul>
+
+    <div class="highlight-example">
+        <h3>Example Highlighted Terms</h3>
+        <p>Here are some terms that might be useful to auto-highlight:</p>
+        <ul>
+            <li><code>patient</code> - for medical records</li>
+            <li><code>diagnosis</code> - for clinical notes</li>
+            <li><code>treatment</code> - for care plans</li>
+            <li><code>medication</code> - for drug lists</li>
+            <li><code>symptoms</code> - for patient complaints</li>
+        </ul>
+    </div>
+
+    <p>The extension works by injecting a content script into web pages that searches for text nodes containing your specified terms. It then wraps matching text in colored highlight spans while preserving the original page structure.</p>
+
+    <h2>Technical Features</h2>
+    
+    <p>This extension includes several advanced features:</p>
+    
+    <ul>
+        <li><strong>Multi-term highlighting</strong> - Search for multiple terms simultaneously</li>
+        <li><strong>Unique color coding</strong> - Each term gets a distinct color</li>
+        <li><strong>Case-insensitive search</strong> - Find terms regardless of capitalization</li>
+        <li><strong>Privacy-focused</strong> - No external API calls, everything runs locally</li>
+        <li><strong>Auto-highlight mode</strong> - Automatically highlight on every page</li>
+        <li><strong>Persistent settings</strong> - Your preferences are saved between sessions</li>
+    </ul>
+
+    <p>To get the most out of the auto-highlight feature, consider setting up terms that are relevant to your daily work. For example, if you're a healthcare provider, you might want to auto-highlight terms like "vital signs", "lab results", "medication", and "allergies".</p>
+
+    <div class="demo-section">
+        <h2>Testing Instructions</h2>
+        <p>Try these steps to test the auto-highlight functionality:</p>
+        <ol>
+            <li>Set default terms: "highlight", "extension", "demo", "terms"</li>
+            <li>Enable auto-highlight mode</li>
+            <li>Navigate to a different page or refresh this one</li>
+            <li>Watch as your terms are automatically highlighted!</li>
+        </ol>
+    </div>
+
+    <p>Remember, the extension only works on regular web pages, not on browser settings pages or special URLs. If you're having trouble, check the browser console for any error messages.</p>
+</body>
+</html>

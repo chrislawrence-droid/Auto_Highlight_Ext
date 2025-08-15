@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Debug Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007acc;
+        }
+        .test-text {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        .console-output {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Extension Debug Page</h1>
+    
+    <div class="debug-section">
+        <h2>Debug Controls</h2>
+        <p>Use these buttons to test the extension functionality:</p>
+        
+        <button onclick="testExtension()">Test Extension</button>
+        <button onclick="testHighlight()">Test Highlight</button>
+        <button onclick="checkConsole()">Check Console</button>
+        <button onclick="clearConsole()">Clear Console</button>
+        <button onclick="testStorage()">Test Storage</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>Test Text</h2>
+        <div class="test-text">
+            <p>This is a test paragraph with some sample text to highlight. The extension should be able to find and highlight words like <strong>test</strong>, <strong>sample</strong>, and <strong>highlight</strong>.</p>
+            
+            <p>Here's another paragraph with different words: <strong>extension</strong>, <strong>debug</strong>, <strong>functionality</strong>. These should all be highlightable.</p>
+            
+            <p>And a third paragraph with medical terms: <strong>patient</strong>, <strong>diagnosis</strong>, <strong>treatment</strong>, <strong>medication</strong>.</p>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Console Output</h2>
+        <div id="console-output" class="console-output">
+            Console output will appear here...
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Extension Status</h2>
+        <div id="extension-status">
+            Checking extension status...
+        </div>
+    </div>
+
+    <script>
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.innerHTML += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+
+        // Test if extension is loaded
+        function testExtension() {
+            console.log('=== Testing Extension ===');
+            
+            if (window.multiHighlightFinder) {
+                console.log('✅ Extension found:', window.multiHighlightFinder);
+                console.log('Extension methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.multiHighlightFinder)));
+            } else {
+                console.log('❌ Extension not found');
+                console.log('Available global objects:', Object.keys(window));
+            }
+        }
+
+        // Test highlighting functionality
+        function testHighlight() {
+            console.log('=== Testing Highlight ===');
+            
+            if (window.multiHighlightFinder && window.multiHighlightFinder.testHighlight) {
+                console.log('Calling testHighlight method...');
+                window.multiHighlightFinder.testHighlight();
+            } else {
+                console.log('❌ testHighlight method not available');
+            }
+        }
+
+        // Check console for errors
+        function checkConsole() {
+            console.log('=== Console Check ===');
+            console.log('Current page URL:', window.location.href);
+            console.log('Document ready state:', document.readyState);
+            console.log('Extension object:', window.multiHighlightFinder);
+        }
+
+        // Clear console output
+        function clearConsole() {
+            consoleOutput.innerHTML = 'Console cleared...\n';
+        }
+
+        // Test chrome storage
+        function testStorage() {
+            console.log('=== Testing Storage ===');
+            
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                console.log('✅ Chrome storage available');
+                chrome.storage.local.get(['autoHighlightMode', 'defaultTerms'], (result) => {
+                    console.log('Storage contents:', result);
+                });
+            } else {
+                console.log('❌ Chrome storage not available');
+            }
+        }
+
+        // Check extension status on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const statusDiv = document.getElementById('extension-status');
+                if (window.multiHighlightFinder) {
+                    statusDiv.innerHTML = `
+                        <p>✅ Extension loaded successfully</p>
+                        <p><strong>Auto-highlight mode:</strong> ${window.multiHighlightFinder.autoHighlightMode ? 'Enabled' : 'Disabled'}</p>
+                        <p><strong>Default terms:</strong> ${window.multiHighlightFinder.defaultTerms.length > 0 ? window.multiHighlightFinder.defaultTerms.join(', ') : 'None set'}</p>
+                    `;
+                } else {
+                    statusDiv.innerHTML = '<p>❌ Extension not loaded</p>';
+                }
+            }, 2000);
+        });
+
+        // Log page load events
+        console.log('Debug page loaded');
+        console.log('Waiting for extension to load...');
+    </script>
+</body>
+</html>

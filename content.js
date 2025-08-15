@@ -1,6 +1,9 @@
 // Multi-Highlight Finder Content Script
+console.log('Multi-Highlight Finder content script loaded');
+
 class MultiHighlightFinder {
   constructor() {
+    console.log('MultiHighlightFinder constructor called');
     this.highlights = new Map(); // Map to store highlight elements
     this.currentTerms = []; // Array of current search terms
     this.isActive = false;
@@ -18,9 +21,6 @@ class MultiHighlightFinder {
       return;
     }
     
-    // Load saved settings
-    this.loadSettings();
-    
     // Listen for Escape key to close overlay
     document.addEventListener('keydown', this.handleKeydown.bind(this));
     
@@ -36,12 +36,10 @@ class MultiHighlightFinder {
     // Set up content observer for dynamic page changes (SPA support)
     this.setupContentObserver();
     
-    // Auto-highlight if enabled and terms exist
-    if (this.autoHighlightMode && this.defaultTerms.length > 0) {
-      setTimeout(() => {
-        this.performSearch(this.defaultTerms.join('\n'));
-      }, 1000); // Wait 1 second for page to fully load
-    }
+    // Load saved settings and then initialize auto-highlight
+    this.loadSettingsAndInit();
+    
+    console.log('MultiHighlightFinder initialization complete');
   }
 
   loadSettings() {
@@ -52,6 +50,29 @@ class MultiHighlightFinder {
         this.defaultTerms = result.defaultTerms || [];
         console.log('Loaded settings:', { autoHighlightMode: this.autoHighlightMode, defaultTerms: this.defaultTerms });
       });
+    }
+  }
+
+  loadSettingsAndInit() {
+    // Load saved settings and then initialize auto-highlight
+    if (chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['autoHighlightMode', 'defaultTerms'], (result) => {
+        this.autoHighlightMode = result.autoHighlightMode || false;
+        this.defaultTerms = result.defaultTerms || [];
+        console.log('Loaded settings:', { autoHighlightMode: this.autoHighlightMode, defaultTerms: this.defaultTerms });
+        
+        // Now initialize auto-highlight if enabled and terms exist
+        if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+          console.log('Auto-highlight enabled with terms:', this.defaultTerms);
+          setTimeout(() => {
+            this.performSearch(this.defaultTerms.join('\n'));
+          }, 1000); // Wait 1 second for page to fully load
+        } else {
+          console.log('Auto-highlight not enabled or no default terms set');
+        }
+      });
+    } else {
+      console.log('Chrome storage not available');
     }
   }
 
@@ -517,7 +538,12 @@ class MultiHighlightFinder {
   }
 
   performSearch(termsText) {
-    if (!termsText.trim()) return;
+    console.log('performSearch called with:', termsText);
+    
+    if (!termsText.trim()) {
+      console.log('No terms provided, returning');
+      return;
+    }
 
     // Clear previous highlights
     this.clearHighlights();
@@ -528,10 +554,17 @@ class MultiHighlightFinder {
       .map(term => term.trim())
       .filter(term => term.length > 0);
 
+    console.log('Parsed terms:', terms);
     this.currentTerms = terms;
+
+    if (terms.length === 0) {
+      console.log('No valid terms found after parsing');
+      return;
+    }
 
     // Perform search for each term
     terms.forEach((term, index) => {
+      console.log(`Highlighting term ${index + 1}/${terms.length}: "${term}"`);
       this.highlightTerm(term, index);
     });
 
@@ -541,6 +574,8 @@ class MultiHighlightFinder {
 
   highlightTerm(term, index) {
     if (!term) return;
+
+    console.log(`highlightTerm called for term: "${term}" at index: ${index}`);
 
     // Create a unique color for each term
     const colors = [
@@ -564,6 +599,8 @@ class MultiHighlightFinder {
         textNodes.push(node);
       }
     }
+
+    console.log(`Found ${textNodes.length} text nodes containing term "${term}"`);
 
     // Highlight each matching text node
     textNodes.forEach(textNode => {
@@ -756,13 +793,32 @@ class MultiHighlightFinder {
       console.log('Content observer disconnected');
     }
   }
+
+  // Test method for debugging
+  testHighlight() {
+    console.log('Test highlight method called');
+    console.log('Current state:', {
+      autoHighlightMode: this.autoHighlightMode,
+      defaultTerms: this.defaultTerms,
+      currentTerms: this.currentTerms
+    });
+    
+    // Test with a simple term
+    this.performSearch('test');
+  }
 }
 
 // Initialize the multi-highlight finder when the page loads
+let multiHighlightFinder;
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    new MultiHighlightFinder();
+    multiHighlightFinder = new MultiHighlightFinder();
+    // Make it available globally for testing
+    window.multiHighlightFinder = multiHighlightFinder;
   });
 } else {
-  new MultiHighlightFinder();
+  multiHighlightFinder = new MultiHighlightFinder();
+  // Make it available globally for testing
+  window.multiHighlightFinder = multiHighlightFinder;
 }

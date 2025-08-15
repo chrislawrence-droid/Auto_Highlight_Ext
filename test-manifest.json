@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Simple Test Extension",
+  "version": "1.0",
+  "description": "Simple test to see if content scripts work",
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["test-simple.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "Simple Test Extension"
+  }
+}

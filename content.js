@@ -36,6 +36,40 @@ if (document.body) {
     `;
     document.body.appendChild(indicator);
     console.log('✅ Extension indicator added to page');
+} else {
+    console.log('Document body not available yet, waiting...');
+    // Wait for body to be available
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded fired, adding indicator...');
+            addIndicator();
+        });
+    } else {
+        // If document is already loaded but body isn't available, wait a bit
+        setTimeout(addIndicator, 100);
+    }
+}
+
+function addIndicator() {
+    if (document.body && !document.getElementById('extension-indicator')) {
+        const indicator = document.createElement('div');
+        indicator.id = 'extension-indicator';
+        indicator.textContent = '🔍 Extension Loaded';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+            font-family: Arial, sans-serif;
+        `;
+        document.body.appendChild(indicator);
+        console.log('✅ Extension indicator added to page');
+    }
 }
 
 console.log('=== Simple test function added ===');

@@ -84,6 +84,7 @@ class MultiHighlightFinder {
     this.inputContainer = null;
     this.autoHighlightMode = false; // New: Auto-highlight mode
     this.defaultTerms = []; // New: Default terms to highlight
+    this.lastToggleTime = 0; // Track last toggle time to prevent rapid toggling
     this.init();
   }
 
@@ -625,12 +626,43 @@ class MultiHighlightFinder {
   }
 
   toggleOverlay() {
+    const now = Date.now();
+    const timeSinceLastToggle = now - this.lastToggleTime;
+    
     console.log('toggleOverlay called, current state:', this.isActive);
-    if (this.isActive) {
-      console.log('Hiding overlay...');
+    console.log('Time since last toggle:', timeSinceLastToggle, 'ms');
+    
+    // Prevent rapid toggling (less than 500ms between toggles)
+    if (timeSinceLastToggle < 500) {
+      console.log('❌ Toggle too rapid, ignoring request');
+      return;
+    }
+    
+    this.lastToggleTime = now;
+    
+    console.log('Overlay element exists:', !!this.overlay);
+    console.log('Input container exists:', !!this.inputContainer);
+    
+    // Check if overlay elements actually exist and are visible
+    const overlayVisible = this.overlay && 
+                          this.overlay.style.display === 'block' && 
+                          this.overlay.style.opacity === '1';
+    
+    const inputVisible = this.inputContainer && 
+                        this.inputContainer.style.display === 'block' && 
+                        this.inputContainer.style.opacity === '1';
+    
+    console.log('Overlay visible check:', overlayVisible);
+    console.log('Input visible check:', inputVisible);
+    
+    // Determine actual state based on both isActive flag and visual state
+    const actuallyVisible = this.isActive && overlayVisible && inputVisible;
+    
+    if (actuallyVisible) {
+      console.log('Overlay is actually visible, hiding it...');
       this.hideOverlay();
     } else {
-      console.log('Showing overlay...');
+      console.log('Overlay is not visible, showing it...');
       this.showOverlay();
     }
   }
@@ -646,21 +678,19 @@ class MultiHighlightFinder {
       this.createOverlay();
     }
     
-    // Force display and visibility
-    this.overlay.style.display = 'block';
-    this.overlay.style.visibility = 'visible';
-    this.overlay.style.opacity = '1';
+    // Force display and visibility with !important equivalent
+    this.overlay.style.setProperty('display', 'block', 'important');
+    this.overlay.style.setProperty('visibility', 'visible', 'important');
+    this.overlay.style.setProperty('opacity', '1', 'important');
+    this.overlay.style.setProperty('z-index', '10000', 'important');
     
-    this.inputContainer.style.display = 'block';
-    this.inputContainer.style.visibility = 'visible';
-    this.inputContainer.style.opacity = '1';
-    this.inputContainer.style.transform = 'translateY(0)';
+    this.inputContainer.style.setProperty('display', 'block', 'important');
+    this.inputContainer.style.setProperty('visibility', 'visible', 'important');
+    this.inputContainer.style.setProperty('opacity', '1', 'important');
+    this.inputContainer.style.setProperty('transform', 'translateY(0)', 'important');
+    this.inputContainer.style.setProperty('z-index', '10001', 'important');
     
-    // Ensure high z-index
-    this.overlay.style.zIndex = '10000';
-    this.inputContainer.style.zIndex = '10001';
-    
-    console.log('Overlay styles set, isActive will be set to true');
+    console.log('Overlay styles set with !important, isActive will be set to true');
     
     // Set active state
     this.isActive = true;
@@ -692,6 +722,15 @@ class MultiHighlightFinder {
     console.log('- Input container display:', this.inputContainer.style.display);
     console.log('- Input container opacity:', this.inputContainer.style.opacity);
     console.log('- isActive:', this.isActive);
+    
+    // Add a small delay to ensure visibility
+    setTimeout(() => {
+      console.log('=== Delayed visibility check ===');
+      console.log('Overlay computed display:', window.getComputedStyle(this.overlay).display);
+      console.log('Overlay computed opacity:', window.getComputedStyle(this.overlay).opacity);
+      console.log('Input computed display:', window.getComputedStyle(this.inputContainer).display);
+      console.log('Input computed opacity:', window.getComputedStyle(this.inputContainer).opacity);
+    }, 100);
   }
 
   hideOverlay() {

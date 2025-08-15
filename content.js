@@ -17,6 +17,27 @@ window.simpleTest = function() {
     alert('Extension is working!');
 };
 
+// Add a visible indicator that the script is running
+if (document.body) {
+    const indicator = document.createElement('div');
+    indicator.id = 'extension-indicator';
+    indicator.textContent = '🔍 Extension Loaded';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+    `;
+    document.body.appendChild(indicator);
+    console.log('✅ Extension indicator added to page');
+}
+
 console.log('=== Simple test function added ===');
 
 class MultiHighlightFinder {
@@ -136,8 +157,10 @@ class MultiHighlightFinder {
             if (node.nodeType === Node.ELEMENT_NODE) {
               // Check if this is a major content change (like a new page view)
               if (node.tagName === 'MAIN' || node.tagName === 'ARTICLE' || 
-                  node.className.includes('page') || node.className.includes('view') ||
-                  node.id.includes('page') || node.id.includes('view')) {
+                  (node.className && typeof node.className === 'string' && 
+                   (node.className.includes('page') || node.className.includes('view'))) ||
+                  (node.id && typeof node.id === 'string' && 
+                   (node.id.includes('page') || node.id.includes('view')))) {
                 hasMajorChanges = true;
                 break;
               }
@@ -935,6 +958,42 @@ class MultiHighlightFinder {
 // Check if already initialized to prevent duplicate instances
 console.log('=== Starting initialization logic ===');
 
+// Add a fallback test function that doesn't depend on the class
+window.fallbackTest = function() {
+  console.log('=== Fallback test function ===');
+  console.log('This function works even if the class fails');
+  
+  // Try to highlight any text containing "test"
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let found = false;
+  let node;
+  while (node = walker.nextNode()) {
+    if (node.textContent.toLowerCase().includes('test')) {
+      console.log('Found text with "test":', node.textContent);
+      found = true;
+      
+      // Create a simple highlight
+      const parent = node.parentNode;
+      const highlightSpan = document.createElement('span');
+      highlightSpan.textContent = node.textContent;
+      highlightSpan.style.cssText = 'background: yellow; padding: 2px;';
+      
+      parent.replaceChild(highlightSpan, node);
+      break;
+    }
+  }
+  
+  if (!found) {
+    console.log('No text containing "test" found');
+  }
+};
+
 if (window.multiHighlightFinder) {
   console.log('MultiHighlightFinder already exists, skipping initialization');
 } else {
@@ -952,6 +1011,7 @@ if (window.multiHighlightFinder) {
           console.log('✅ MultiHighlightFinder initialized on DOMContentLoaded');
         } catch (error) {
           console.error('❌ Error creating MultiHighlightFinder:', error);
+          console.log('❌ Class initialization failed, but fallback functions are available');
         }
       }
     });
@@ -965,6 +1025,7 @@ if (window.multiHighlightFinder) {
         console.log('✅ MultiHighlightFinder initialized immediately');
       } catch (error) {
         console.error('❌ Error creating MultiHighlightFinder:', error);
+        console.log('❌ Class initialization failed, but fallback functions are available');
       }
     }
   }
@@ -992,7 +1053,27 @@ window.forceHighlight = function(term) {
   }
 };
 
+// Add a simple test that should always work
+window.basicTest = function() {
+  console.log('=== Basic test function ===');
+  console.log('Script is running!');
+  console.log('Window object:', window);
+  console.log('Document:', document);
+  console.log('Extension object:', window.multiHighlightFinder);
+  
+  // Try to create a simple highlight
+  if (document.body) {
+    const testSpan = document.createElement('span');
+    testSpan.textContent = 'TEST HIGHLIGHT';
+    testSpan.style.cssText = 'background: yellow; padding: 2px;';
+    document.body.appendChild(testSpan);
+    console.log('✅ Basic highlight test completed');
+  }
+};
+
 console.log('=== Extension script fully loaded ===');
 console.log('Test functions available:');
+console.log('- basicTest() - Basic functionality test');
 console.log('- testExtension() - Test if extension is working');
 console.log('- forceHighlight("term") - Force highlight a specific term');
+console.log('Current window object keys:', Object.keys(window));

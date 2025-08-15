@@ -27,6 +27,9 @@ class MultiHighlightFinder {
     // Listen for page visibility changes (for SPA navigation)
     document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
     
+    // Listen for page unload to clean up
+    window.addEventListener('beforeunload', this.cleanup.bind(this));
+    
     // Create overlay elements (but don't show them)
     this.createOverlay();
     
@@ -89,53 +92,67 @@ class MultiHighlightFinder {
   setupContentObserver() {
     // Create a MutationObserver to watch for dynamic content changes
     this.contentObserver = new MutationObserver((mutations) => {
-      // Only re-highlight if auto-highlight mode is enabled and we have terms
-      if (this.autoHighlightMode && this.defaultTerms.length > 0) {
-        // Check if there are significant content changes
-        let hasSignificantChanges = false;
-        
-        for (const mutation of mutations) {
-          // Look for added nodes with text content
-          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-            for (const node of mutation.addedNodes) {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                // Check if this element contains text nodes
-                const textWalker = document.createTreeWalker(
-                  node,
-                  NodeFilter.SHOW_TEXT,
-                  null,
-                  false
-                );
-                
-                if (textWalker.nextNode()) {
-                  hasSignificantChanges = true;
-                  break;
-                }
+      // Check for major page changes that might require reinitialization
+      let hasMajorChanges = false;
+      let hasSignificantChanges = false;
+      
+      for (const mutation of mutations) {
+        // Look for major structural changes (like new main content areas)
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if this is a major content change (like a new page view)
+              if (node.tagName === 'MAIN' || node.tagName === 'ARTICLE' || 
+                  node.className.includes('page') || node.className.includes('view') ||
+                  node.id.includes('page') || node.id.includes('view')) {
+                hasMajorChanges = true;
+                break;
+              }
+              
+              // Check if this element contains text nodes
+              const textWalker = document.createTreeWalker(
+                node,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+              );
+              
+              if (textWalker.nextNode()) {
+                hasSignificantChanges = true;
               }
             }
           }
-          
-          // Look for text content changes
-          if (mutation.type === 'characterData' && mutation.target.textContent.trim().length > 0) {
-            hasSignificantChanges = true;
-          }
-          
-          if (hasSignificantChanges) break;
         }
         
-        // If we have significant changes, re-highlight after a short delay
-        if (hasSignificantChanges) {
-          // Clear existing highlights first
-          this.clearHighlights();
-          
-          // Wait a bit for the DOM to settle, then re-highlight
-          setTimeout(() => {
-            if (this.autoHighlightMode && this.defaultTerms.length > 0) {
-              console.log('Content changed, re-highlighting terms:', this.defaultTerms);
-              this.performSearch(this.defaultTerms.join('\n'));
-            }
-          }, 300); // Wait 300ms for DOM to settle
+        // Look for text content changes
+        if (mutation.type === 'characterData' && mutation.target.textContent.trim().length > 0) {
+          hasSignificantChanges = true;
         }
+        
+        if (hasMajorChanges) break;
+      }
+      
+      // Handle major page changes
+      if (hasMajorChanges) {
+        console.log('Major page change detected, reinitializing...');
+        setTimeout(() => {
+          this.reinitialize();
+        }, 500);
+        return;
+      }
+      
+      // Handle regular content changes (only re-highlight if auto-highlight mode is enabled and we have terms)
+      if (this.autoHighlightMode && this.defaultTerms.length > 0 && hasSignificantChanges) {
+        // Clear existing highlights first
+        this.clearHighlights();
+        
+        // Wait a bit for the DOM to settle, then re-highlight
+        setTimeout(() => {
+          if (this.autoHighlightMode && this.defaultTerms.length > 0) {
+            console.log('Content changed, re-highlighting terms:', this.defaultTerms);
+            this.performSearch(this.defaultTerms.join('\n'));
+          }
+        }, 300); // Wait 300ms for DOM to settle
       }
     });
     
@@ -792,6 +809,21 @@ class MultiHighlightFinder {
       this.contentObserver.disconnect();
       console.log('Content observer disconnected');
     }
+    
+    // Remove event listeners
+    document.removeEventListener('keydown', this.handleKeydown);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.removeEventListener('beforeunload', this.cleanup);
+    
+    // Remove overlay elements
+    if (this.overlay && this.overlay.parentNode) {
+      this.overlay.parentNode.removeChild(this.overlay);
+    }
+    if (this.inputContainer && this.inputContainer.parentNode) {
+      this.inputContainer.parentNode.removeChild(this.inputContainer);
+    }
+    
+    console.log('MultiHighlightFinder cleanup complete');
   }
 
   // Test method for debugging
@@ -806,19 +838,42 @@ class MultiHighlightFinder {
     // Test with a simple term
     this.performSearch('test');
   }
+
+  // Method to reinitialize for new page content
+  reinitialize() {
+    console.log('Reinitializing MultiHighlightFinder for new page content');
+    
+    // Clean up old instance
+    this.cleanup();
+    
+    // Clear any existing highlights
+    this.clearHighlights();
+    
+    // Reinitialize
+    this.init();
+  }
 }
 
 // Initialize the multi-highlight finder when the page loads
-let multiHighlightFinder;
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    multiHighlightFinder = new MultiHighlightFinder();
-    // Make it available globally for testing
-    window.multiHighlightFinder = multiHighlightFinder;
-  });
+// Check if already initialized to prevent duplicate instances
+if (window.multiHighlightFinder) {
+  console.log('MultiHighlightFinder already exists, skipping initialization');
 } else {
-  multiHighlightFinder = new MultiHighlightFinder();
-  // Make it available globally for testing
-  window.multiHighlightFinder = multiHighlightFinder;
+  let multiHighlightFinder;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.multiHighlightFinder) {
+        multiHighlightFinder = new MultiHighlightFinder();
+        // Make it available globally for testing
+        window.multiHighlightFinder = multiHighlightFinder;
+      }
+    });
+  } else {
+    if (!window.multiHighlightFinder) {
+      multiHighlightFinder = new MultiHighlightFinder();
+      // Make it available globally for testing
+      window.multiHighlightFinder = multiHighlightFinder;
+    }
+  }
 }

@@ -1065,7 +1065,9 @@ if (window.multiHighlightFinder) {
   }
 }
 
-// Add global test functions
+// Add global test functions immediately
+console.log('=== Adding global test functions ===');
+
 window.testExtension = function() {
   console.log('=== Global test function called ===');
   if (window.multiHighlightFinder) {
@@ -1102,12 +1104,77 @@ window.basicTest = function() {
     testSpan.style.cssText = 'background: yellow; padding: 2px;';
     document.body.appendChild(testSpan);
     console.log('✅ Basic highlight test completed');
+  } else {
+    console.log('❌ Document body not available yet');
   }
 };
+
+// Add a simple highlight function that works immediately
+window.quickHighlight = function(term) {
+  console.log('=== Quick highlight called with term:', term, '===');
+  
+  if (!document.body) {
+    console.log('❌ Document body not available');
+    return;
+  }
+  
+  // Simple text search and highlight
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let found = false;
+  let node;
+  while (node = walker.nextNode()) {
+    if (node.textContent.toLowerCase().includes(term.toLowerCase())) {
+      console.log('Found text with term:', node.textContent);
+      found = true;
+      
+      // Create a simple highlight
+      const parent = node.parentNode;
+      const highlightSpan = document.createElement('span');
+      highlightSpan.textContent = node.textContent;
+      highlightSpan.style.cssText = 'background: yellow; padding: 2px; border-radius: 3px;';
+      
+      parent.replaceChild(highlightSpan, node);
+      break;
+    }
+  }
+  
+  if (!found) {
+    console.log('No text containing term found');
+  }
+};
+
+console.log('✅ Global test functions added to window object');
+console.log('Available functions:', Object.keys(window).filter(key => key.includes('Test') || key.includes('Highlight')));
 
 console.log('=== Extension script fully loaded ===');
 console.log('Test functions available:');
 console.log('- basicTest() - Basic functionality test');
+console.log('- quickHighlight("term") - Quick highlight test');
 console.log('- testExtension() - Test if extension is working');
 console.log('- forceHighlight("term") - Force highlight a specific term');
-console.log('Current window object keys:', Object.keys(window));
+
+// Verify functions are actually available
+console.log('=== Verifying function availability ===');
+const availableFunctions = Object.keys(window).filter(key => 
+  key.includes('Test') || key.includes('Highlight') || key.includes('test') || key.includes('highlight')
+);
+console.log('Available test/highlight functions:', availableFunctions);
+
+// Test if basicTest is actually available
+if (typeof window.basicTest === 'function') {
+  console.log('✅ basicTest function is available');
+} else {
+  console.log('❌ basicTest function is NOT available');
+}
+
+if (typeof window.quickHighlight === 'function') {
+  console.log('✅ quickHighlight function is available');
+} else {
+  console.log('❌ quickHighlight function is NOT available');
+}

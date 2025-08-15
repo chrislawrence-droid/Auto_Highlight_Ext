@@ -1,5 +1,9 @@
 // Multi-Highlight Finder Content Script
-console.log('Multi-Highlight Finder content script loaded');
+console.log('=== Multi-Highlight Finder content script loaded ===');
+console.log('Current URL:', window.location.href);
+console.log('Document ready state:', document.readyState);
+console.log('Chrome runtime available:', typeof chrome !== 'undefined');
+console.log('Chrome storage available:', typeof chrome !== 'undefined' && chrome.storage);
 
 class MultiHighlightFinder {
   constructor() {
@@ -15,34 +19,49 @@ class MultiHighlightFinder {
   }
 
   init() {
+    console.log('=== MultiHighlightFinder.init() called ===');
+    
     // Security check: Only run when explicitly injected by our extension
     if (!this.isSecureContext()) {
-      console.log('Security check failed, disabling extension');
+      console.log('❌ Security check failed, disabling extension');
       return;
     }
     
-    // Listen for Escape key to close overlay
-    document.addEventListener('keydown', this.handleKeydown.bind(this));
+    console.log('✅ Security check passed, continuing initialization...');
     
-    // Listen for page visibility changes (for SPA navigation)
-    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-    
-    // Listen for page unload to clean up
-    window.addEventListener('beforeunload', this.cleanup.bind(this));
-    
-    // Create overlay elements (but don't show them)
-    this.createOverlay();
-    
-    // Listen for messages from popup/background
-    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
-    
-    // Set up content observer for dynamic page changes (SPA support)
-    this.setupContentObserver();
-    
-    // Load saved settings and then initialize auto-highlight
-    this.loadSettingsAndInit();
-    
-    console.log('MultiHighlightFinder initialization complete');
+    try {
+      // Listen for Escape key to close overlay
+      document.addEventListener('keydown', this.handleKeydown.bind(this));
+      console.log('✅ Keydown listener added');
+      
+      // Listen for page visibility changes (for SPA navigation)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+      console.log('✅ Visibility change listener added');
+      
+      // Listen for page unload to clean up
+      window.addEventListener('beforeunload', this.cleanup.bind(this));
+      console.log('✅ Beforeunload listener added');
+      
+      // Create overlay elements (but don't show them)
+      this.createOverlay();
+      console.log('✅ Overlay created');
+      
+      // Listen for messages from popup/background
+      chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+      console.log('✅ Message listener added');
+      
+      // Set up content observer for dynamic page changes (SPA support)
+      this.setupContentObserver();
+      console.log('✅ Content observer set up');
+      
+      // Load saved settings and then initialize auto-highlight
+      this.loadSettingsAndInit();
+      console.log('✅ Settings loading initiated');
+      
+      console.log('✅ MultiHighlightFinder initialization complete');
+    } catch (error) {
+      console.error('❌ Error during initialization:', error);
+    }
   }
 
   loadSettings() {
@@ -167,8 +186,14 @@ class MultiHighlightFinder {
   }
 
   isSecureContext() {
+    console.log('=== Security check running ===');
+    console.log('window.isSecureContext:', window.isSecureContext);
+    console.log('typeof chrome:', typeof chrome);
+    console.log('chrome.runtime:', chrome.runtime);
+    
     // Verify we're running in a secure context
     if (!window.isSecureContext) {
+      console.log('❌ Security check failed: not a secure context');
       return false;
     }
     
@@ -176,16 +201,20 @@ class MultiHighlightFinder {
     try {
       // Check if we can access chrome.runtime (extension context)
       if (typeof chrome === 'undefined' || !chrome.runtime) {
+        console.log('❌ Security check failed: chrome.runtime not available');
         return false;
       }
       
       // Verify we're running as an extension
       if (!chrome.runtime.id) {
+        console.log('❌ Security check failed: no chrome.runtime.id');
         return false;
       }
       
+      console.log('✅ Security check passed');
       return true;
     } catch (error) {
+      console.log('❌ Security check failed with error:', error);
       return false;
     }
   }
@@ -828,7 +857,7 @@ class MultiHighlightFinder {
 
   // Test method for debugging
   testHighlight() {
-    console.log('Test highlight method called');
+    console.log('=== Test highlight method called ===');
     console.log('Current state:', {
       autoHighlightMode: this.autoHighlightMode,
       defaultTerms: this.defaultTerms,
@@ -836,7 +865,41 @@ class MultiHighlightFinder {
     });
     
     // Test with a simple term
+    console.log('Testing highlight with term: "test"');
     this.performSearch('test');
+  }
+
+  // Simple test method that can be called from console
+  simpleTest() {
+    console.log('=== Simple test method ===');
+    console.log('Extension object:', this);
+    console.log('Document body:', document.body);
+    console.log('Body text content length:', document.body.textContent.length);
+    
+    // Try to find any text on the page
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    
+    let textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node.textContent);
+    }
+    
+    console.log('Found text nodes:', textNodes.length);
+    console.log('Sample text nodes:', textNodes.slice(0, 5));
+    
+    // Try to highlight the word "test" if it exists
+    if (document.body.textContent.toLowerCase().includes('test')) {
+      console.log('Found "test" in page, attempting to highlight...');
+      this.performSearch('test');
+    } else {
+      console.log('No "test" found in page');
+    }
   }
 
   // Method to reinitialize for new page content
@@ -867,6 +930,7 @@ if (window.multiHighlightFinder) {
         multiHighlightFinder = new MultiHighlightFinder();
         // Make it available globally for testing
         window.multiHighlightFinder = multiHighlightFinder;
+        console.log('✅ MultiHighlightFinder initialized on DOMContentLoaded');
       }
     });
   } else {
@@ -874,6 +938,34 @@ if (window.multiHighlightFinder) {
       multiHighlightFinder = new MultiHighlightFinder();
       // Make it available globally for testing
       window.multiHighlightFinder = multiHighlightFinder;
+      console.log('✅ MultiHighlightFinder initialized immediately');
     }
   }
 }
+
+// Add global test functions
+window.testExtension = function() {
+  console.log('=== Global test function called ===');
+  if (window.multiHighlightFinder) {
+    console.log('✅ Extension found, running simple test...');
+    window.multiHighlightFinder.simpleTest();
+  } else {
+    console.log('❌ Extension not found');
+    console.log('Available global objects:', Object.keys(window));
+  }
+};
+
+window.forceHighlight = function(term) {
+  console.log('=== Force highlight called with term:', term, '===');
+  if (window.multiHighlightFinder) {
+    console.log('✅ Extension found, forcing highlight...');
+    window.multiHighlightFinder.performSearch(term);
+  } else {
+    console.log('❌ Extension not found');
+  }
+};
+
+console.log('=== Extension script fully loaded ===');
+console.log('Test functions available:');
+console.log('- testExtension() - Test if extension is working');
+console.log('- forceHighlight("term") - Force highlight a specific term');

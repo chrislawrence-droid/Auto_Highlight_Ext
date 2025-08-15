@@ -5,6 +5,20 @@ console.log('Document ready state:', document.readyState);
 console.log('Chrome runtime available:', typeof chrome !== 'undefined');
 console.log('Chrome storage available:', typeof chrome !== 'undefined' && chrome.storage);
 
+// Simple immediate test
+console.log('=== IMMEDIATE TEST ===');
+console.log('Script is running!');
+console.log('Document body exists:', !!document.body);
+console.log('Document title:', document.title);
+
+// Add a simple global function immediately
+window.simpleTest = function() {
+    console.log('Simple test function called!');
+    alert('Extension is working!');
+};
+
+console.log('=== Simple test function added ===');
+
 class MultiHighlightFinder {
   constructor() {
     console.log('MultiHighlightFinder constructor called');
@@ -919,26 +933,39 @@ class MultiHighlightFinder {
 
 // Initialize the multi-highlight finder when the page loads
 // Check if already initialized to prevent duplicate instances
+console.log('=== Starting initialization logic ===');
+
 if (window.multiHighlightFinder) {
   console.log('MultiHighlightFinder already exists, skipping initialization');
 } else {
   let multiHighlightFinder;
 
   if (document.readyState === 'loading') {
+    console.log('Document still loading, waiting for DOMContentLoaded...');
     document.addEventListener('DOMContentLoaded', () => {
       if (!window.multiHighlightFinder) {
-        multiHighlightFinder = new MultiHighlightFinder();
-        // Make it available globally for testing
-        window.multiHighlightFinder = multiHighlightFinder;
-        console.log('✅ MultiHighlightFinder initialized on DOMContentLoaded');
+        console.log('DOMContentLoaded fired, creating MultiHighlightFinder...');
+        try {
+          multiHighlightFinder = new MultiHighlightFinder();
+          // Make it available globally for testing
+          window.multiHighlightFinder = multiHighlightFinder;
+          console.log('✅ MultiHighlightFinder initialized on DOMContentLoaded');
+        } catch (error) {
+          console.error('❌ Error creating MultiHighlightFinder:', error);
+        }
       }
     });
   } else {
+    console.log('Document already loaded, creating MultiHighlightFinder immediately...');
     if (!window.multiHighlightFinder) {
-      multiHighlightFinder = new MultiHighlightFinder();
-      // Make it available globally for testing
-      window.multiHighlightFinder = multiHighlightFinder;
-      console.log('✅ MultiHighlightFinder initialized immediately');
+      try {
+        multiHighlightFinder = new MultiHighlightFinder();
+        // Make it available globally for testing
+        window.multiHighlightFinder = multiHighlightFinder;
+        console.log('✅ MultiHighlightFinder initialized immediately');
+      } catch (error) {
+        console.error('❌ Error creating MultiHighlightFinder:', error);
+      }
     }
   }
 }
